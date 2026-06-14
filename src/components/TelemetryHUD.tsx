@@ -4,27 +4,19 @@ import type { RecSettings } from '@/components/SettingsPanel';
 interface Props {
   settings: RecSettings;
   speed: number;
+  accel: number;
   altitude: number;
   distance: number;
+  now: Date;
 }
 
 const unitMap = {
-  metric: { speed: 'км/ч', alt: 'м', dist: 'км', spdMul: 1, altMul: 1, distMul: 1 },
-  imperial: { speed: 'mph', alt: 'ft', dist: 'mi', spdMul: 0.621, altMul: 3.281, distMul: 0.621 },
-  nautical: { speed: 'уз', alt: 'м', dist: 'мор.мили', spdMul: 0.54, altMul: 1, distMul: 0.54 },
+  metric:   { speed: 'км/ч', alt: 'м', dist: 'км',        accel: 'м/с²', spdMul: 1,     altMul: 1,     distMul: 1,     accMul: 0.2778 },
+  imperial: { speed: 'mph',  alt: 'ft', dist: 'mi',        accel: 'ft/s²', spdMul: 0.621, altMul: 3.281, distMul: 0.621, accMul: 0.911  },
+  nautical: { speed: 'уз',   alt: 'м', dist: 'м.мили',    accel: 'м/с²', spdMul: 0.54,  altMul: 1,     distMul: 0.54,  accMul: 0.2778 },
 };
 
-const Stat = ({
-  icon,
-  value,
-  unit,
-  label,
-}: {
-  icon: string;
-  value: string;
-  unit: string;
-  label: string;
-}) => (
+const Stat = ({ icon, value, unit, label }: { icon: string; value: string; unit: string; label: string }) => (
   <div className="rounded-2xl border border-white/10 bg-black/45 px-4 py-2.5 backdrop-blur-md">
     <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/60">
       <Icon name={icon} size={11} className="text-primary" />
@@ -39,41 +31,78 @@ const Stat = ({
   </div>
 );
 
-const TelemetryHUD = ({ settings, speed, altitude, distance }: Props) => {
+const AccelStat = ({ accel, unit }: { accel: number; unit: string }) => {
+  const val = accel.toFixed(1);
+  const isPos = accel >= 0;
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/45 px-4 py-2.5 backdrop-blur-md">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/60">
+        <Icon name="Zap" size={11} className="text-primary" />
+        Ускорение
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span
+          className={`font-display text-3xl font-700 leading-none tabular-nums ${
+            isPos ? 'text-emerald-400' : 'text-orange-400'
+          }`}
+          style={{ textShadow: isPos ? '0 0 12px rgba(52,211,153,0.6)' : '0 0 12px rgba(251,146,60,0.6)' }}
+        >
+          {isPos ? '+' : ''}{val}
+        </span>
+        <span className="text-xs font-medium text-white/70">{unit}</span>
+      </div>
+    </div>
+  );
+};
+
+const DateTimeBadge = ({ now }: { now: Date }) => {
+  const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const dateStr = now.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  return (
+    <div className="flex flex-col items-end gap-0.5 rounded-2xl border border-white/10 bg-black/45 px-4 py-2.5 backdrop-blur-md">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/60">
+        <Icon name="Clock" size={11} className="text-primary" />
+        Дата / Время
+      </div>
+      <span className="font-display text-2xl font-600 leading-none tracking-wider text-white text-glow tabular-nums">
+        {timeStr}
+      </span>
+      <span className="text-[11px] font-medium text-white/60">{dateStr}</span>
+    </div>
+  );
+};
+
+const TelemetryHUD = ({ settings, speed, accel, altitude, distance, now }: Props) => {
   const u = unitMap[settings.units];
   const { overlays } = settings;
+  const accelConverted = accel * u.accMul;
 
   return (
     <div className="pointer-events-none absolute inset-0">
-      <div className="absolute left-4 top-4 flex flex-col gap-2.5">
+      {/* Left column */}
+      <div className="absolute left-4 top-20 flex flex-col gap-2.5">
         {overlays.speed && (
-          <Stat
-            icon="Wind"
-            label="Скорость"
-            value={Math.round(speed * u.spdMul).toString()}
-            unit={u.speed}
-          />
+          <Stat icon="Wind" label="Скорость" value={Math.round(speed * u.spdMul).toString()} unit={u.speed} />
+        )}
+        {overlays.speed && (
+          <AccelStat accel={accelConverted} unit={u.accel} />
         )}
         {overlays.altitude && (
-          <Stat
-            icon="Mountain"
-            label="Высота"
-            value={Math.round(altitude * u.altMul).toString()}
-            unit={u.alt}
-          />
+          <Stat icon="Mountain" label="Высота" value={Math.round(altitude * u.altMul).toString()} unit={u.alt} />
         )}
         {overlays.distance && (
-          <Stat
-            icon="Route"
-            label="Расстояние"
-            value={(distance * u.distMul).toFixed(1)}
-            unit={u.dist}
-          />
+          <Stat icon="Route" label="Расстояние" value={(distance * u.distMul).toFixed(1)} unit={u.dist} />
         )}
       </div>
 
+      {/* Right column — date/time + minimap */}
+      <div className="absolute right-4 top-20 flex flex-col items-end gap-2.5">
+        <DateTimeBadge now={now} />
+      </div>
+
       {overlays.map && (
-        <div className="absolute bottom-4 right-4 h-28 w-28 overflow-hidden rounded-2xl border-2 border-primary/60 bg-black/50 shadow-[0_0_24px_hsl(var(--neon)/0.4)] backdrop-blur-md sm:h-32 sm:w-32">
+        <div className="absolute bottom-36 right-4 h-28 w-28 overflow-hidden rounded-2xl border-2 border-primary/60 bg-black/50 shadow-[0_0_24px_hsl(var(--neon)/0.4)] backdrop-blur-md sm:h-32 sm:w-32">
           <div className="grid-bg absolute inset-0 opacity-40" />
           <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
             <path

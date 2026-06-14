@@ -22,13 +22,20 @@ const Index = () => {
   });
 
   const [speed, setSpeed] = useState(0);
+  const [prevSpeed, setPrevSpeed] = useState(0);
   const [altitude, setAltitude] = useState(1240);
   const [distance, setDistance] = useState(0);
+  const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     const id = setInterval(() => {
-      setSpeed((s) => Math.max(0, Math.min(180, s + (Math.random() - 0.45) * 18)));
+      setSpeed((s) => {
+        const next = Math.max(0, Math.min(180, s + (Math.random() - 0.45) * 18));
+        setPrevSpeed(s);
+        return next;
+      });
       setAltitude((a) => Math.max(0, a + (Math.random() - 0.5) * 12));
+      setNow(new Date());
     }, 800);
     return () => clearInterval(id);
   }, []);
@@ -103,8 +110,10 @@ const Index = () => {
           <TelemetryHUD
             settings={settings}
             speed={speed}
+            accel={(speed - prevSpeed) / 0.8}
             altitude={altitude}
             distance={distance}
+            now={now}
           />
 
           {/* Big speed when not showing overlay speed - decorative center crosshair */}
