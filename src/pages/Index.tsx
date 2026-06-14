@@ -115,60 +115,83 @@ const Index = () => {
           )}
         </div>
 
-        {/* Bottom controls */}
-        <div className="relative z-20 border-t border-border bg-card/95 px-6 py-5 backdrop-blur-md">
-          <div className="flex items-center justify-between">
+        {/* Quick overlay toggles — floating glass pills above the dock */}
+        <div className="pointer-events-auto absolute bottom-32 left-1/2 z-20 flex -translate-x-1/2 flex-wrap items-center justify-center gap-2 px-4">
+          {[
+            { on: settings.overlays.speed, icon: 'Wind', label: 'Скорость', key: 'speed' as const },
+            { on: settings.overlays.map, icon: 'Map', label: 'Карта', key: 'map' as const },
+            { on: settings.overlays.altitude, icon: 'Mountain', label: 'Высота', key: 'altitude' as const },
+            { on: settings.overlays.distance, icon: 'Route', label: 'Дистанция', key: 'distance' as const },
+          ].map((c) => (
+            <button
+              key={c.label}
+              onClick={() =>
+                setSettings({
+                  ...settings,
+                  overlays: { ...settings.overlays, [c.key]: !settings.overlays[c.key] },
+                })
+              }
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium backdrop-blur-md transition-all hover:scale-105 ${
+                c.on
+                  ? 'border-primary/50 bg-primary/20 text-primary shadow-[0_0_16px_hsl(var(--neon)/0.35)]'
+                  : 'border-white/10 bg-black/40 text-white/60'
+              }`}
+            >
+              <Icon name={c.icon} size={13} />
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Floating glass dock */}
+        <div className="pointer-events-auto absolute bottom-6 left-1/2 z-30 -translate-x-1/2 px-4">
+          <div className="flex items-center gap-3 rounded-[2rem] border border-white/10 bg-black/50 p-2.5 shadow-[0_8px_40px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+            <button
+              onClick={() => setSettings({ ...settings, audio: !settings.audio })}
+              className={`group grid h-14 w-14 place-items-center rounded-3xl transition-all hover:scale-105 ${
+                settings.audio ? 'bg-white/10 text-white' : 'bg-white/5 text-white/40'
+              }`}
+            >
+              <Icon name={settings.audio ? 'Mic' : 'MicOff'} size={22} />
+            </button>
+
             <button
               onClick={() => setSettings({ ...settings, camera: settings.camera === 'back' ? 'front' : 'back' })}
-              className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary text-foreground transition-all hover:scale-105 hover:bg-muted"
+              className="grid h-14 w-14 place-items-center rounded-3xl bg-white/10 text-white transition-all hover:scale-105 hover:bg-white/20"
             >
-              <Icon name="SwitchCamera" size={24} />
+              <Icon name="SwitchCamera" size={22} />
             </button>
 
             <button
               onClick={toggleRec}
-              className={`grid h-20 w-20 place-items-center rounded-full border-4 transition-all duration-200 hover:scale-105 ${
+              className={`grid h-[4.5rem] w-[4.5rem] place-items-center rounded-full border-[5px] transition-all duration-200 hover:scale-105 ${
                 recording
-                  ? 'border-red-400 bg-red-500/20'
+                  ? 'border-red-400/80 bg-red-500/20'
                   : 'border-primary bg-primary/15 animate-glow'
               }`}
             >
               {recording ? (
-                <span className="h-7 w-7 rounded-md bg-red-500" />
+                <span className="h-6 w-6 rounded-[7px] bg-red-500" />
               ) : (
-                <span className="h-14 w-14 rounded-full bg-primary" />
+                <span className="h-12 w-12 rounded-full bg-primary" />
               )}
             </button>
 
             <button
-              onClick={() => setSettingsOpen(true)}
-              className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary text-foreground transition-all hover:scale-105 hover:bg-muted"
+              onClick={() => setSettings({ ...settings, wide: !settings.wide })}
+              className={`grid h-14 w-14 place-items-center rounded-3xl transition-all hover:scale-105 ${
+                settings.wide ? 'bg-white/10 text-white' : 'bg-white/5 text-white/40'
+              }`}
             >
-              <Icon name="Settings" size={24} />
+              <Icon name="Maximize" size={22} />
             </button>
-          </div>
 
-          {/* Quick chips */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-            {[
-              { on: settings.overlays.speed, icon: 'Wind', label: 'Скорость' },
-              { on: settings.overlays.map, icon: 'Map', label: 'Карта' },
-              { on: settings.overlays.altitude, icon: 'Mountain', label: 'Высота' },
-              { on: settings.overlays.distance, icon: 'Route', label: 'Дистанция' },
-              { on: settings.audio, icon: 'Mic', label: 'Звук' },
-            ].map((c) => (
-              <span
-                key={c.label}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  c.on
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-secondary text-muted-foreground'
-                }`}
-              >
-                <Icon name={c.icon} size={13} />
-                {c.label}
-              </span>
-            ))}
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="grid h-14 w-14 place-items-center rounded-3xl bg-white/10 text-white transition-all hover:scale-105 hover:bg-white/20"
+            >
+              <Icon name="Settings" size={22} />
+            </button>
           </div>
         </div>
       </div>
